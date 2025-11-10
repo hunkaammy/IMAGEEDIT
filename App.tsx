@@ -512,7 +512,7 @@ const App: React.FC = () => {
                  <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`w-full capitalize font-semibold py-3 px-5 rounded-md transition-all duration-200 text-base ${
+                    className={`w-full capitalize font-semibold py-2 px-3 text-sm sm:py-3 sm:px-5 sm:text-base rounded-md transition-all duration-200 ${
                         activeTab === tab 
                         ? 'bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-cyan-500/40' 
                         : 'text-gray-300 hover:text-white hover:bg-white/10'
@@ -548,7 +548,7 @@ const App: React.FC = () => {
                     </p>
                     
                     {(['modify', 'add', 'replaceBackground'].includes(editMode)) && (
-                      <form onSubmit={(e) => { e.preventDefault(); handleRetouchAction(); }} className="w-full flex items-center gap-2">
+                      <form onSubmit={(e) => { e.preventDefault(); handleRetouchAction(); }} className="w-full flex flex-col sm:flex-row items-center gap-2">
                           <input
                               type="text"
                               value={prompt}
@@ -558,12 +558,12 @@ const App: React.FC = () => {
                                 editMode === 'add' ? "e.g., 'a small butterfly on the flower'" : 
                                 "e.g., 'a futuristic cityscape at night'"
                               }
-                              className="flex-grow bg-gray-800 border border-gray-700 text-gray-200 rounded-lg p-5 text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60"
+                              className="flex-grow bg-gray-800 border border-gray-700 text-gray-200 rounded-lg p-4 text-base sm:p-5 sm:text-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition w-full disabled:cursor-not-allowed disabled:opacity-60"
                               disabled={isLoading || (hotspotNeeded && !editHotspot)}
                           />
                           <button 
                               type="submit"
-                              className="bg-gradient-to-br from-blue-600 to-blue-500 text-white font-bold py-5 px-8 text-lg rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
+                              className="w-full sm:w-auto flex-shrink-0 bg-gradient-to-br from-blue-600 to-blue-500 text-white font-bold py-4 px-6 text-base sm:py-5 sm:px-8 sm:text-lg rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner disabled:from-blue-800 disabled:to-blue-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
                               disabled={isLoading || !prompt.trim() || (hotspotNeeded && !editHotspot)}
                           >
                               Generate
@@ -574,7 +574,7 @@ const App: React.FC = () => {
                     {editMode === 'remove' && (
                        <button 
                             onClick={handleRetouchAction}
-                            className="w-full bg-gradient-to-br from-red-600 to-red-500 text-white font-bold py-5 px-8 text-lg rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner disabled:from-red-800 disabled:to-red-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-gradient-to-br from-red-600 to-red-500 text-white font-bold py-4 px-6 text-base sm:py-5 sm:px-8 sm:text-lg rounded-lg transition-all duration-300 ease-in-out shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner disabled:from-red-800 disabled:to-red-700 disabled:shadow-none disabled:cursor-not-allowed disabled:transform-none"
                             disabled={isLoading || !editHotspot}
                         >
                             Remove Object
@@ -648,7 +648,7 @@ const App: React.FC = () => {
 
             <button 
                 onClick={handleDownload}
-                className="flex-grow sm:flex-grow-0 ml-auto bg-gradient-to-br from-green-600 to-green-500 text-white font-bold py-3 px-5 rounded-md transition-all duration-300 ease-in-out shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base"
+                className="w-full sm:w-auto sm:ml-auto bg-gradient-to-br from-green-600 to-green-500 text-white font-bold py-3 px-5 rounded-md transition-all duration-300 ease-in-out shadow-lg shadow-green-500/20 hover:shadow-xl hover:shadow-green-500/40 hover:-translate-y-px active:scale-95 active:shadow-inner text-base"
             >
                 Download Image
             </button>

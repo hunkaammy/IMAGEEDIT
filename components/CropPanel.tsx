@@ -33,7 +33,7 @@ const CropPanel: React.FC<CropPanelProps> = ({ onApplyCrop, onSetAspect, isLoadi
       <h3 className="text-lg font-semibold text-gray-300">Crop Image</h3>
       <p className="text-sm text-gray-400 -mt-2">Click and drag on the image to select a crop area.</p>
       
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <span className="text-sm font-medium text-gray-400">Aspect Ratio:</span>
         {aspects.map(({ name, value }) => (
           <button
