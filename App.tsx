@@ -6,7 +6,6 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
-// FIX: Import `generateFilteredImage` and `generateAdjustedImage` which were missing.
 import { generateEditedImage, generateReplacedBackgroundImage, generateFilteredImage, generateAdjustedImage } from './services/geminiService';
 import Header from './components/Header';
 import Spinner from './components/Spinner';
@@ -16,6 +15,7 @@ import CropPanel from './components/CropPanel';
 import TextPanel from './components/TextPanel';
 import { UndoIcon, RedoIcon, EyeIcon } from './components/icons';
 import StartScreen from './components/StartScreen';
+import ApiKeyScreen from './components/ApiKeyScreen';
 
 // Helper to convert a data URL string to a File object
 const dataURLtoFile = (dataurl: string, filename: string): File => {
@@ -35,9 +35,10 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
 }
 
 type Tab = 'retouch' | 'text' | 'adjust' | 'filters' | 'crop';
-type EditMode = 'modify' | 'remove' | 'add' | 'replaceBackground';
+type EditMode = 'modify' | 'add' | 'remove' | 'replaceBackground';
 
 const App: React.FC = () => {
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
   const [history, setHistory] = useState<File[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
   const [prompt, setPrompt] = useState<string>('');
@@ -63,6 +64,12 @@ const App: React.FC = () => {
   const imageContainerRef = useRef<HTMLDivElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const key = sessionStorage.getItem('gemini-api-key');
+    if (key) {
+        setHasApiKey(true);
+    }
+  }, []);
 
   const currentImage = history[historyIndex] ?? null;
   const originalImage = history[0] ?? null;
@@ -118,6 +125,21 @@ const App: React.FC = () => {
     setCrop(undefined);
     setCompletedCrop(undefined);
   }, []);
+  
+  const handleApiError = useCallback((err: unknown, actionContext: string) => {
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+    let displayError = `Failed to ${actionContext}. ${errorMessage}`;
+    
+    // Provide a clearer message if the error is related to the API key.
+    if (errorMessage.includes('API key') || errorMessage.includes('400') || errorMessage.includes('403') || errorMessage.includes('Requested entity was not found')) {
+        displayError = 'Your API key seems to be invalid. Please enter a valid key.';
+        sessionStorage.removeItem('gemini-api-key');
+        setHasApiKey(false);
+    }
+    
+    setError(displayError);
+    console.error(err);
+  }, []);
 
   const handleRetouchAction = useCallback(async () => {
     if (!currentImage) {
@@ -156,13 +178,11 @@ const App: React.FC = () => {
         setDisplayHotspot(null);
         setPrompt('');
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`Failed to generate the image. ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'generate the image');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, prompt, editHotspot, addImageToHistory, editMode]);
+  }, [currentImage, prompt, editHotspot, addImageToHistory, editMode, handleApiError]);
   
   const handleApplyFilter = useCallback(async (filterPrompt: string) => {
     if (!currentImage) {
@@ -178,13 +198,11 @@ const App: React.FC = () => {
         const newImageFile = dataURLtoFile(filteredImageUrl, `filtered-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`Failed to apply the filter. ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'apply the filter');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory]);
+  }, [currentImage, addImageToHistory, handleApiError]);
   
   const handleApplyAdjustment = useCallback(async (adjustmentPrompt: string) => {
     if (!currentImage) {
@@ -200,13 +218,11 @@ const App: React.FC = () => {
         const newImageFile = dataURLtoFile(adjustedImageUrl, `adjusted-${Date.now()}.png`);
         addImageToHistory(newImageFile);
     } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-        setError(`Failed to apply the adjustment. ${errorMessage}`);
-        console.error(err);
+        handleApiError(err, 'apply the adjustment');
     } finally {
         setIsLoading(false);
     }
-  }, [currentImage, addImageToHistory]);
+  }, [currentImage, addImageToHistory, handleApiError]);
 
   const handleApplyCrop = useCallback(() => {
     if (!completedCrop || !imgRef.current) {
@@ -400,9 +416,19 @@ const App: React.FC = () => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
   }, [textPosition]);
+  
+  const handleKeySubmit = (key: string) => {
+    sessionStorage.setItem('gemini-api-key', key);
+    setHasApiKey(true);
+    setError(null);
+  };
 
   const renderContent = () => {
-    if (error) {
+    if (!hasApiKey) {
+        return <ApiKeyScreen onKeySubmit={handleKeySubmit} initialError={error} />;
+    }
+
+    if (error && !currentImage) { // Only show full-screen error if there's no image
        return (
            <div className="text-center animate-fade-in bg-red-500/10 border border-red-500/20 p-8 rounded-lg max-w-2xl mx-auto flex flex-col items-center gap-4">
             <h2 className="text-2xl font-bold text-red-300">An Error Occurred</h2>
@@ -457,6 +483,17 @@ const App: React.FC = () => {
 
     return (
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 animate-fade-in">
+        {error && (
+             <div className="w-full text-center animate-fade-in bg-red-500/10 border border-red-500/20 p-4 rounded-lg flex items-center justify-between gap-4">
+              <p className="text-md text-red-400">{error}</p>
+              <button
+                  onClick={() => setError(null)}
+                  className="bg-red-500/20 hover:bg-red-500/40 text-white font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+                >
+                  Dismiss
+              </button>
+            </div>
+        )}
         <div className="relative w-full flex justify-center items-center shadow-2xl rounded-xl overflow-hidden bg-black/20" ref={imageContainerRef}>
             {isLoading && (
                 <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center gap-4 animate-fade-in">
@@ -656,11 +693,11 @@ const App: React.FC = () => {
       </div>
     );
   };
-  
+
   return (
     <div className="min-h-screen text-gray-100 flex flex-col">
       <Header />
-      <main className={`flex-grow w-full max-w-[1600px] mx-auto p-4 md:p-8 flex justify-center ${currentImage ? 'items-start' : 'items-center'}`}>
+      <main className={`flex-grow w-full max-w-[1600px] mx-auto p-4 md:p-8 flex justify-center ${currentImage || !hasApiKey ? 'items-center' : 'items-center'}`}>
         {renderContent()}
       </main>
     </div>

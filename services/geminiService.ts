@@ -5,6 +5,18 @@
 
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 
+/**
+ * Helper to get the API client.
+ * The API key is retrieved from session storage.
+ */
+const getGeminiClient = (): GoogleGenAI => {
+    const apiKey = sessionStorage.getItem('gemini-api-key');
+    if (!apiKey) {
+        throw new Error('API key not found. Please set your API key.');
+    }
+    return new GoogleGenAI({ apiKey });
+};
+
 // Helper function to convert a File object to a Gemini API Part
 const fileToPart = async (file: File): Promise<{ inlineData: { mimeType: string; data: string; } }> => {
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -78,7 +90,7 @@ export const generateEditedImage = async (
     mode: 'modify' | 'add' | 'remove' = 'modify'
 ): Promise<string> => {
     console.log(`Starting generative ${mode} at:`, hotspot);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    const ai = getGeminiClient();
     
     const originalImagePart = await fileToPart(originalImage);
 
@@ -138,7 +150,7 @@ export const generateReplacedBackgroundImage = async (
     backgroundPrompt: string,
 ): Promise<string> => {
     console.log(`Starting background replacement: ${backgroundPrompt}`);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    const ai = getGeminiClient();
     
     const originalImagePart = await fileToPart(originalImage);
     const prompt = `IMPORTANT: The output image MUST be exactly 1600x1600 pixels.
@@ -181,7 +193,7 @@ export const generateFilteredImage = async (
     filterPrompt: string,
 ): Promise<string> => {
     console.log(`Starting filter generation: ${filterPrompt}`);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    const ai = getGeminiClient();
     
     const originalImagePart = await fileToPart(originalImage);
     const prompt = `IMPORTANT: The output image MUST be exactly 1600x1600 pixels.
@@ -223,7 +235,7 @@ export const generateAdjustedImage = async (
     adjustmentPrompt: string,
 ): Promise<string> => {
     console.log(`Starting global adjustment generation: ${adjustmentPrompt}`);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+    const ai = getGeminiClient();
     
     const originalImagePart = await fileToPart(originalImage);
     const prompt = `IMPORTANT: The output image MUST be exactly 1600x1600 pixels.
